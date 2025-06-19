@@ -35,14 +35,6 @@
       <HintPath>..\..\..\..\AVEVA\Engineering15.4\Aveva.Core.Database.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Aveva.Core.Database.Filters">
-      <HintPath>..\..\..\..\AVEVA\Engineering15.4\Aveva.Core.Database.Filters.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Aveva.Core.Database.View">
-      <HintPath>..\..\..\..\AVEVA\Engineering15.4\Aveva.Core.Database.View.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="PMLNet">
       <HintPath>..\..\..\..\AVEVA\Engineering15.4\PMLNet.dll</HintPath>
       <Private>False</Private>
@@ -58,7 +50,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attribute.cs" />
-    <Compile Include="AttributeHistory.cs" />
     <Compile Include="SessionCompare.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

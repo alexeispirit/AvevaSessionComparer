@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Aveva.Core.Database;
-using Aveva.Core.Database.View;
 using Aveva.Core.PMLNet;
 
 namespace SessionCompare
@@ -23,47 +22,136 @@ namespace SessionCompare
         public void Assign(SessionCompare that) { }
 
         [PMLNetCallable]
-        public void Run(string date1, string date2)
+        public Hashtable ByDates(string refno, string date1, string date2) 
         {
-            DateTime dt1;
-            DateTime dt2;
+            DbElement dbElement = GetDbElement(refno);
+            return CompareByDates(dbElement, date1, date2);
+        }
 
-            DateTime.TryParse(date1, out dt1);
-            DateTime.TryParse(date2, out dt2);
+        [PMLNetCallable]
+        public Hashtable ByDates(string date1, string date2)
+        {
+            DbElement dbElement = CurrentElement.Element;
+            return CompareByDates(dbElement, date1, date2);
+        }
 
-            dt1 = dt1.ToUniversalTime().ToLocalTime();
-            dt2 = dt2.ToUniversalTime().ToLocalTime();
+        [PMLNetCallable]
+        public Hashtable BySessions(string refno, double sess1, double sess2)
+        {
+            DbElement dbElement = GetDbElement(refno);
+            return CompareBySessions(dbElement, sess1, sess2);
+        }
 
-            DbElement ce = CurrentElement.Element;
-            Db db = ce.Db;
+        [PMLNetCallable]
+        public Hashtable BySessions(double sess1, double sess2)
+        {
+            DbElement dbElement = CurrentElement.Element;
+            return CompareBySessions(dbElement, sess1, sess2);
+        }
 
-            DbSession dbSessionBase = db.CurrentSession;
-            DbSession dbSessionTarget = db.CurrentSession;
+        private Hashtable CompareByDates(DbElement dbElement, string date1, string date2)
+        {
+            Db db = dbElement.Db;
+
+            DbSession dbSessionBase = GetSessionByDateString(db, date1);
+            DbSession dbSessionTarget = GetSessionByDateString(db, date2);
+
+            Hashtable results = CompareToArray(dbElement, dbSessionBase, dbSessionTarget);
+
+            db.SwitchToLatestSession(true);
+
+            return results;
+        }
+
+        private Hashtable CompareBySessions(DbElement dbElement, double sess1, double sess2)
+        {
+            Db db = dbElement.Db;
+
+            DbSession dbSessionBase = GetSessionByNumber(db, (int)sess1);
+            DbSession dbSessionTarget = GetSessionByNumber(db, (int)sess2);
+
+            Hashtable results = CompareToArray(dbElement, dbSessionBase, dbSessionTarget);
+
+            db.SwitchToLatestSession(true);
+
+            return results;
+        }
+
+        private void ConsoleOutput(Hashtable compareResults)
+        {
+            foreach (Hashtable row in compareResults.Values)
+            {
+                string attName = (string)row[1];
+                string baseValue = (string)row[2];
+                string targetValue = (string)row[3];
+
+                Console.WriteLine($"{attName}: '{baseValue}' --- '{targetValue}'");
+            }
+        }
+
+        private Hashtable CompareToArray(DbElement dbElement, DbSession baseSession, DbSession targetSession)
+        {
+            Hashtable results = new Hashtable();
+
+            DbAttribute[] atts;
+            dbElement.AllAttributesChangedBetween(baseSession, targetSession, out atts);
+
+            baseAttributes = GetAttributesValues(dbElement, atts, baseSession);
+            targetAttributes = GetAttributesValues(dbElement, atts, targetSession);
+
+            for (int i = 0; i < atts.Length; i++)
+            {
+                Hashtable row = new Hashtable();
+                string attKey = atts[i].Name;
+                row[1] = attKey;
+                row[2] = baseAttributes[attKey].Value;
+                row[3] = targetAttributes[attKey].Value;
+                results[i + 1] = row;
+            }
+
+            return results;
+        }
+
+        private DbSession GetSessionByDateString(Db db, string dateStr)
+        {
+            DateTime dt;
+            DateTime.TryParse(dateStr, out dt);
+            dt = dt.ToUniversalTime().ToLocalTime();
+            
+            DbSession dbSession = db.CurrentSession;
 
             try
             {
-                dbSessionBase = db.SessionBeforeDate(dt1);
-                dbSessionTarget = db.SessionBeforeDate(dt2);
+                dbSession = db.SessionBeforeDate(dt);
             }
-            catch(Exception ex) 
-            { 
+            catch (Exception ex)
+            {
                 Console.WriteLine(ex.Message);
             }
 
-            DbAttribute[] atts;
-            ce.AllAttributesChangedBetween(dbSessionBase, dbSessionTarget, out atts);
+            return dbSession;
+        }
 
-            baseAttributes = GetAttributesValues(ce, atts, dbSessionBase);
-            targetAttributes = GetAttributesValues(ce, atts, dbSessionTarget);
+        private DbSession GetSessionByNumber(Db db, int number)
+        {
+            DbSession dbSession = db.CurrentSession;
 
-            foreach (string attName in baseAttributes.Keys)
+            try
             {
-                string baseValue = baseAttributes[attName].Value;
-                string targetValue = targetAttributes[attName].Value;
-                Console.WriteLine($"{attName}: {baseValue} ({dbSessionBase.SessionNumber}) {targetValue} ({dbSessionTarget.SessionNumber})");
+                dbSession = db.Session(number);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
 
-            db.SwitchToLatestSession(true);
+            return dbSession;
+        }
+
+        private DbElement GetDbElement(string refNo)
+        {
+            DbElement dbElement = DbElement.GetElement(refNo);
+            return dbElement;
         }
 
         private Dictionary<string, Attribute> GetAttributesValues(DbElement dbElement, DbAttribute[] atts, DbSession dbSession)
