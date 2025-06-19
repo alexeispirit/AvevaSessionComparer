@@ -1,4 +1,4 @@
-!compareSessionsDll = 'C:\code\.net\SessionCompare\SessionCompare\bin\Debug\SessionCompare'
+!compareSessionsDll = 'C:\code\.net\SessionCompare\SessionCompare\bin\Release\SessionCompare'
 
 import 'GridControl'
 handle any
@@ -8,7 +8,7 @@ import '$!compareSessionsDll'
 handle any
 endhandle
 
-layout form !!CompareSessions size 100 20 resize
+layout form !!CompareSessions size 100 15 resize
     using namespace 'Aveva.Core.Presentation'
 
     path down
@@ -20,8 +20,8 @@ layout form !!CompareSessions size 100 20 resize
     paragraph .tillTitle text 'To: '
     option .tillValue width 5
     path down
-    container .gridFrame PmlNetControl 'grid' at x0 width 100 height 20
-    button .compareBtn 'Compare' at x80 callback '!this.compareClick()'
+    container .gridFrame PmlNetControl 'grid' at x0 width 100 height 15
+    button .compareBtn 'Compare' at x85 callback '!this.compareClick()'
     path right
     button .closeBtn 'Close' callback '!this.closeClick()'
 
@@ -70,6 +70,11 @@ define method .CompareClick()
 
     !nds = object NetDataSource('Session Attributes', !headers, !data)
     !this.grid.BindToDataSource(!nds)
+    !this.grid.SetColumnWidth(1, 100)
+    !this.grid.SetColumnWidth(2, 150)
+    !this.grid.SetColumnWidth(3, 250)
+    !this.grid.SetColumnWidth(4, 250)
+    !this.grid.GridHeight(!data.size())
 endmethod
 
 define method .populateSessions()
@@ -100,7 +105,11 @@ define method .gridInit()
     !this.grid.FixedHeaders(true)
     !this.grid.FixedRows(false)
     !this.grid.EditableGrid(false)
-    !this.grid.GridHeight(15)
+    !this.grid.SetColumnWidth(1, 100)
+    !this.grid.SetColumnWidth(2, 150)
+    !this.grid.SetColumnWidth(3, 250)
+    !this.grid.SetColumnWidth(4, 250)
+    !this.grid.GridHeight(1)
 endmethod
 
 define method .headers() is ARRAY
