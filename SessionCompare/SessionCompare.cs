@@ -82,8 +82,9 @@ namespace SessionCompare
             foreach (Hashtable row in compareResults.Values)
             {
                 string attName = (string)row[1];
-                string baseValue = (string)row[2];
-                string targetValue = (string)row[3];
+                string attDesc = (string)row[2];
+                string baseValue = (string)row[3];
+                string targetValue = (string)row[4];
 
                 Console.WriteLine($"{attName}: '{baseValue}' --- '{targetValue}'");
             }
@@ -103,9 +104,11 @@ namespace SessionCompare
             {
                 Hashtable row = new Hashtable();
                 string attKey = atts[i].Name;
+                string attDesc = atts[i].Description;
                 row[1] = attKey;
-                row[2] = baseAttributes[attKey].Value;
-                row[3] = targetAttributes[attKey].Value;
+                row[2] = attDesc;
+                row[3] = baseAttributes[attKey].Value;
+                row[4] = targetAttributes[attKey].Value;
                 results[i + 1] = row;
             }
 
