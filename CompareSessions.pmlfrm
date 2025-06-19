@@ -1,0 +1,114 @@
+!compareSessionsDll = 'C:\code\.net\SessionCompare\SessionCompare\bin\Debug\SessionCompare'
+
+import 'GridControl'
+handle any
+endhandle
+
+import '$!compareSessionsDll'
+handle any
+endhandle
+
+layout form !!CompareSessions size 100 20 resize
+    using namespace 'Aveva.Core.Presentation'
+
+    path down
+    paragraph .CEValue at x0 text '' width 10
+    path right
+    button .CEBtn 'CE' at x10 callback '!this.CEClick()'
+    paragraph .fromTitle text 'From: '
+    option .fromValue width 5
+    paragraph .tillTitle text 'To: '
+    option .tillValue width 5
+    path down
+    container .gridFrame PmlNetControl 'grid' at x0 width 100 height 20
+    button .compareBtn 'Compare' at x80 callback '!this.compareClick()'
+    path right
+    button .closeBtn 'Close' callback '!this.closeClick()'
+
+    member .grid is NetGridControl
+    member .CE is DBREF
+    member .from is REAL
+    member .till is REAL
+exit
+
+define method .CompareSessions()
+    using namespace 'Aveva.Core.Presentation'
+
+    !this.grid = object NetGridControl()
+    !this.gridFrame.control = !this.grid.handle()
+
+    !this.initcall = '!this.init()'
+    !this.cancelcall = '!this.closeClick()'
+endmethod
+
+define method .init()
+    !this.CEClick()
+endmethod
+
+define method .closeClick()
+    kill !!CompareSessions
+endmethod
+
+define method .CEClick()
+    !this.CE = !!CE
+    !this.CEValue.Val = !this.CE.ref.string()
+    !this.populateSessions()
+    !this.gridInit()
+endmethod
+
+define method .CompareClick()
+    using namespace 'SessionCompare'
+    using namespace 'Aveva.Core.Presentation'
+
+    !sc = object SessionCompare()
+
+    !baseSession = REAL(!this.fromValue.Selection('Rtext'))
+    !targetSession = REAL(!this.tillValue.Selection('Rtext'))
+
+    !headers = !this.headers()
+    !data = !sc.BySessions(!this.CEValue.Val, !baseSession, !targetSession)
+
+    !nds = object NetDataSource('Session Attributes', !headers, !data)
+    !this.grid.BindToDataSource(!nds)
+endmethod
+
+define method .populateSessions()
+    !history = HIST OF $!this.CE
+
+    !histStrArray = object ARRAY()
+
+    do !i indices !history
+        !histStrArray[!i] = STRING(!history[!i])
+    enddo
+
+    !this.fromValue.Dtext = !histStrArray
+    !this.fromValue.Rtext = !histStrArray
+    !this.tillValue.Dtext = !histStrArray
+    !this.tillValue.Rtext = !histStrArray
+endmethod
+
+define method .gridInit()
+    using namespace 'Aveva.Core.Presentation'
+
+    !headers = !this.headers()
+    !data = object ARRAY()
+
+    !nds = object NetDataSource('Session Attributes', !headers, !data)
+    !this.grid.BindToDataSource(!nds)
+    !this.grid.ColumnExcelFilter(false)
+    !this.grid.OutlookGroupStyle(false)
+    !this.grid.FixedHeaders(true)
+    !this.grid.FixedRows(false)
+    !this.grid.EditableGrid(false)
+    !this.grid.GridHeight(15)
+endmethod
+
+define method .headers() is ARRAY
+    !headers = object ARRAY()
+    !headers[1] = 'Name'
+    !headers[2] = 'Desc'
+    !headers[3] = 'BaseValue'
+    !headers[4] = 'TargetValue'
+
+    return !headers
+endmethod
