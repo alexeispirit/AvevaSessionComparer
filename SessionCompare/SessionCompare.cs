@@ -55,7 +55,10 @@ namespace SessionCompare
 
             Hashtable results = CompareToArray(dbElement, dbSessionBase, dbSessionTarget);
 
-            db.SwitchToLatestSession(true);
+            if (db.IsSwitched())
+            {
+                db.SwitchBackSession(true);
+            }
 
             return results;
         }
@@ -69,7 +72,10 @@ namespace SessionCompare
 
             Hashtable results = CompareToArray(dbElement, dbSessionBase, dbSessionTarget);
 
-            db.SwitchToLatestSession(true);
+            if (db.IsSwitched())
+            {
+                db.SwitchBackSession(true);
+            }
 
             return results;
         }
